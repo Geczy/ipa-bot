@@ -1,0 +1,12 @@
+.env
+*.ipa
+output.json
+!bin
+iosqueuebot_session/
+*.log
+*.js
+build
+coverage
+crash
+node_modules/
+ipa-files/
