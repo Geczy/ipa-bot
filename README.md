@@ -2,7 +2,7 @@
 
 # IPA Bot
 
-This is a Telegram bot for downloading and decrypting iOS app files (.ipa). It uses the `bagbak` tool and the `ipatool` binary to decrypt the encrypted .ipa files.
+This is a Telegram bot for downloading and decrypting iOS app files (.ipa).
 
 ## Prerequisites
 
