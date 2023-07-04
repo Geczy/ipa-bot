@@ -10,6 +10,10 @@ To run this bot, make sure you have the following software installed:
 
 - Node.js (version >= 19.0.0, < 20.0.0)
 - Yarn package manager
+- Jailbroken iPhone on iOS 16
+  - [OpenSSH](https://www.ios-repo-updates.com/repository/cydia-telesphoreo/package/openssh/) with root login access
+  - [Frida](https://www.ios-repo-updates.com/repository/frida/package/re.frida.server/) run `frida-server -D` on the device
+  - [AppSync Unified](https://www.ios-repo-updates.com/repository/karen-s-repo/package/ai.akemi.appsyncunified/)
 
 ## Installation
 
