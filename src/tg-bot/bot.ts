@@ -9,6 +9,7 @@ import { uploadDecryptedFile } from "./uploadDecryptedFile";
 
 let isBusy = false;
 const requestQueue: { trackId: string; event: NewMessageEvent }[] = [];
+const admins = process.env.ADMIN_IDS?.split(",") || [];
 
 async function finished(mongoDB?: MongoDB) {
   console.log("Cleaning up...");
@@ -31,7 +32,6 @@ async function finished(mongoDB?: MongoDB) {
 }
 
 async function handleReboot(event: NewMessageEvent) {
-  const admins = process.env.ADMIN_IDS?.split(",") || [];
   if (!event.chatId || !admins.includes(`${event.message.senderId}`)) return;
 
   // Example: Close the MongoDB connection
@@ -48,7 +48,6 @@ async function handleReboot(event: NewMessageEvent) {
 }
 
 async function handleDelete(event: NewMessageEvent) {
-  const admins = process.env.ADMIN_IDS?.split(",") || [];
   if (!event.chatId || !admins.includes(`${event.message.senderId}`)) return;
 
   const message = event.message;
@@ -253,8 +252,8 @@ client.addEventHandler(async (event) => {
   const message = event.message;
   const sendTo = message.chatId?.toString() as string;
 
-  if (event.isPrivate) return 1;
-  if (!sendTo || !CHAT_IDS.includes(sendTo)) return 1;
+  if (event.isPrivate && !admins.includes(`${event.message.senderId}`)) return;
+  if (!event.isPrivate && !CHAT_IDS.includes(sendTo)) return 1;
 
   if (message.text.startsWith("/request")) handleRequest(event);
   if (message.text.startsWith("/reboot")) handleReboot(event);
