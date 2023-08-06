@@ -34,14 +34,15 @@ To run this bot, make sure you have the following software installed:
    ```shell
    yarn install
    ```
+   a. You'll need to install mongosh manually by visiting their page and following their instructions: https://www.mongodb.com/docs/mongodb-shell/install
 
-4. Rename the `.env.example` file to `.env`:
+5. Rename the `.env.example` file to `.env`:
 
    ```shell
    mv .env.example .env
    ```
 
-5. Open the `.env` file and provide the necessary values for the environment variables.
+6. Open the `.env` file and provide the necessary values for the environment variables.
 
 ## Usage
 
@@ -64,6 +65,13 @@ The following commands are available for interacting with the IPA Bot:
 Please make sure to provide valid App Store URLs when using the `/request` and `/delete` commands.
 
 Note: The bot can only process one app download or deletion request at a time. If there is already an ongoing request, additional requests will be added to a queue and processed in order once the previous request is completed.
+
+## Running into errors while requesting an app?
+There may be some other packages that you need to manually install. In order to see the error message, you can run the bash script that you see in your Terminal upon requesting an app. It should look something like this:
+```shell
+bash ./src/bash-decryptor/download-ipa.sh 1137397744 0123456789 ''
+```
+From here, you'll recieve an error message indicating what the issue is.
 
 ## License
 
