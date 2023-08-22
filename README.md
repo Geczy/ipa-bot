@@ -69,7 +69,7 @@ Note: The bot can only process one app download or deletion request at a time. I
 ## Running into errors while requesting an app?
 There may be some other packages that you need to manually install. In order to see the error message, you can run the bash script that you see in your Terminal upon requesting an app. It should look something like this:
 ```shell
-bash ./src/bash-decryptor/download-ipa.sh 1137397744 0123456789 ''
+bash ./src/bash-decryptor/download-ipa.sh 1137397744 us 0123456789 ''
 ```
 From here, you'll recieve an error message indicating what the issue is.
 
