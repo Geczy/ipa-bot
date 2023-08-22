@@ -63,8 +63,10 @@ transfer_file() {
   # Extract the file name from the file path
   filename=$(basename "$file_path")
 
-  # Append the filename, chatId, and topicId to the appInfoResponse JSON object
-  updatedJson=$(echo "$appInfoResponse" | jq --arg filename "$filename" --arg chatId "$chatId" --arg topicId "$topicId" '. + {filename: $filename, chatId: $chatId, topicId: $topicId}')
+  # Append the filename, chatId, topicId, and expiration date to the appInfoResponse JSON object
+  updatedJson=$(echo "$appInfoResponse" | jq --arg filename "$filename" --arg chatId "$chatId" --arg topicId "$topicId" '. + {filename: $filename, chatId: $chatId, topicId: $topicId, expireAt: (now | strflocaltime("%Y-%m-%dT%H:%M:%SZ") | fromdate + 172800 | strftime("%Y-%m-%dT%H:%M:%SZ")) }')
+
+  # Insert the updated JSON into the MongoDB collection
   mongosh "$MONGODB_URL" --quiet --eval "db.app_info_collection.insertOne($updatedJson)"
 }
 
@@ -126,8 +128,9 @@ function verify_upload_ipa() {
 
 main() {
   local trackId="$1"
-  local chatId="$2"
-  local topicId="$3"
+  local countryCode="$2"
+  local chatId="$3"
+  local topicId="$4"
   local appInfoResponse=""
 
   local bundleId
@@ -138,7 +141,7 @@ main() {
   local downloadResponse
   local loginResponse
 
-  echo "🔍 Looking up app..."
+  echo "🔍 Looking up app in the ${countryCode^^} region..."
 
   # Quit if trackId is not a number
   if ! [[ "$trackId" =~ ^[0-9]+$ ]]; then
@@ -146,7 +149,7 @@ main() {
     exit 1
   fi
 
-  appInfoResponse=$(get_app_info_by_id "$trackId")
+  appInfoResponse=$(get_app_info_by_id "$trackId" "$countryCode")
   if [[ $? -eq 1 ]]; then
     echo "❌ Failed to lookup $trackId."
     exit 1
@@ -159,12 +162,20 @@ main() {
   echo "🔍 Bundle ID: $bundleId"
 
   price=$(echo "$appInfoResponse" | jq -r '.price')
-  if (($(echo "$price != 0" | bc -l))); then
-    echo "❌ App is not free. Try https://iphonecake.com/app_${trackId}_.html"
-    exit 1
+
+  if [ $(echo "$price != 0" | bc -l) -eq 1 ]; then
+    echo "ℹ️ Checking license..."
+    hasLicense=$(timeout 3 "$ipatool" --keychain-passphrase "$SSH_PASSWORD" --non-interactive download -b "$bundleId" 2>&1)
+
+    if [[ "$hasLicense" = *"license is required"* ]]; then
+      echo "❌ License is required for this paid app. Either pay for the app or find the IPA file here: https://iphonecake.com/app_${trackId}_.html"
+      exit 1
+    fi
   fi
+  echo "✅ License exists"
 
   # Check for existing decrypted files
+  # Automatic region changing will be coming eventually, and it will replace some of the code below when it's ready
   decryptedIPA=$(check_files "ipa-files/decrypted" "$bundleId")
   if [[ -n "$decryptedIPA" ]]; then
     verify_upload_ipa "$bundleId" "$decryptedIPA"
@@ -216,7 +227,6 @@ main() {
       echo "❌ File not found in the downloads directory."
       exit 1
     fi
-  fi
 
   # Install App
   if ! install_app "$bundleId" "$downloadedIPA"; then
@@ -260,7 +270,7 @@ main() {
     echo "❌ No decrypted files found for app."
     exit 1
   fi
-
+  
   transfer_file "$decryptedIPA" "$chatId" "$topicId" "$appInfoResponse"
   echo "⬆️ Starting IPA upload..."
 

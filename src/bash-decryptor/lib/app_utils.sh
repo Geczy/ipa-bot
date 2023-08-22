@@ -2,12 +2,13 @@
 
 get_app_info_by_id() {
   local trackId=$1
+  local countryCode=$2
   local response
   local error_message
   local exists
 
   # Make the search request
-  local search_url="https://itunes.apple.com/lookup?id=$trackId&cacheBust=$(date +%s)"
+  local search_url="https://itunes.apple.com/lookup?id=$trackId&country=$countryCode&cacheBust=$(date +%s)"
   response=$(curl -s "$search_url")
 
   # Check for errors in the response

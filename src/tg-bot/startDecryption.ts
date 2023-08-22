@@ -7,10 +7,12 @@ import { stringContainsArray } from "./stringContainsArray";
 export async function startDecryption({
   message,
   trackId,
+  countryCode,
   sendTo,
 }: {
   message: Api.Message;
   trackId: string;
+  countryCode: string;
   sendTo: string;
 }) {
   let output = "";
@@ -25,6 +27,7 @@ export async function startDecryption({
     const yarnProcess = spawn("yarn", [
       "up",
       trackId,
+      countryCode,
       sendTo,
       `${message.replyToMsgId || ""}`,
     ]);

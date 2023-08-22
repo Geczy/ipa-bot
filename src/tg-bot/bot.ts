@@ -116,7 +116,7 @@ async function handleRequest(event: NewMessageEvent) {
   }
 
   const urlParts = message.text.trim().split(" ");
-  if (urlParts.length < 2 || !message.text.includes("apps.apple.com")) {
+  if (urlParts.length < 2 || !/apps\.apple\.com|itunes\.apple\.com/.test(message.text)) {
     await client.sendMessage(sendTo, {
       message: "❌ Invalid App Store URL.",
       replyTo: message,
@@ -126,9 +126,15 @@ async function handleRequest(event: NewMessageEvent) {
   }
 
   const url = urlParts[1].trim();
+
   const idRegex = /\/id(\d+)/;
-  const match = url.match(idRegex);
-  const trackId = match ? match[1] : null;
+  const countryRegex = /apple\.com\/(\w\w)\//;
+
+  const countryId = url.match(idRegex);
+  const matchCountry = url.match(countryRegex);
+
+  const trackId = countryId ? countryId[1] : "";
+  const countryCode = matchCountry ? matchCountry[1] : "us";
 
   if (!(trackId && trackId.length && trackId.length < 15)) {
     await client.sendMessage(sendTo, {
@@ -190,7 +196,7 @@ async function handleRequest(event: NewMessageEvent) {
   try {
     if (!appInfo) {
       console.log("No app found for trackId:", trackId);
-      await startDecryption({ message, trackId, sendTo });
+      await startDecryption({ message, trackId, countryCode, sendTo });
 
       // Lookup the app we just decrypted by trackId
       appInfo = (await collection.findOne(
