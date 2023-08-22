@@ -67,7 +67,9 @@ Please make sure to provide valid App Store URLs when using the `/request` and `
 Note: The bot can only process one app download or deletion request at a time. If there is already an ongoing request, additional requests will be added to a queue and processed in order once the previous request is completed.
 
 ## Running into errors while requesting an app?
-There may be some other packages that you need to manually install. In order to see the error message, you can run the bash script that you see in your Terminal upon requesting an app. It should look something like this:
+You will need to install MongoSH if you haven't already. You can follow their tutorial here: https://www.mongodb.com/docs/mongodb-shell/install
+
+There may also be some other packages that you need to manually install. In order to see a detailed error message, you can run the bash script that you see in your Terminal upon requesting an app. It should look something like this:
 ```shell
 bash ./src/bash-decryptor/download-ipa.sh 1137397744 us 0123456789 ''
 ```
