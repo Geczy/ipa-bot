@@ -141,7 +141,7 @@ main() {
   local downloadResponse
   local loginResponse
 
-  echo "🔍 Looking up app in the ${countryCode^^} region..."
+  echo "🔍 Looking up app in the $countryCode region..."
 
   # Quit if trackId is not a number
   if ! [[ "$trackId" =~ ^[0-9]+$ ]]; then
@@ -172,6 +172,7 @@ main() {
       exit 1
     fi
   fi
+
   echo "✅ License exists"
 
   # Check for existing decrypted files
@@ -213,6 +214,7 @@ main() {
     if [[ "$downloadResponse" = *"error"* ]]; then
       echo "❌ Download of app failed."
       exit 1
+    fi
     fi
 
     # JQ is not working with ipatool
