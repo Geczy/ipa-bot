@@ -61,8 +61,8 @@ else
 fi
 chmod +x "$ipatool"
 
-authResponse=$("$ipatool" --keychain-passphrase "$SSH_PASSWORD" --non-interactive auth info --format json)
-if [[ "$authResponse" != *"success\":true"* ]]; then
+# Turn the login to a function
+login_to_itunes() {
   echo "$authResponse"
   loginResponse=$("$ipatool" --keychain-passphrase "$SSH_PASSWORD" --non-interactive auth login -e "$ITUNES_USER" -p "$ITUNES_PASS" --format json)
   if [[ "$loginResponse" != *"success"* ]]; then
@@ -70,6 +70,11 @@ if [[ "$authResponse" != *"success\":true"* ]]; then
     echo "❌ Login to iTunes failed."
     exit 1
   fi
+}
+
+authResponse=$("$ipatool" --keychain-passphrase "$SSH_PASSWORD" --non-interactive auth info --format json)
+if [[ "$authResponse" != *"success\":true"* ]]; then
+  login_to_itunes
   exit 1
 fi
 

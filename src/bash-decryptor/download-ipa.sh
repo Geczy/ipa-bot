@@ -212,8 +212,12 @@ main() {
     fi
 
     if [[ "$downloadResponse" = *"error"* ]]; then
-      echo "❌ Download of app failed."
-      exit 1
+      if [[ "$downloadResponse" = *"Your password has changed"* ]]; then
+        login_to_itunes
+      else
+        echo "❌ Download of app failed."
+        exit 1
+      fi
     fi
   fi
 
