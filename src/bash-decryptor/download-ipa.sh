@@ -215,20 +215,20 @@ main() {
       echo "❌ Download of app failed."
       exit 1
     fi
-    fi
+  fi
 
-    # JQ is not working with ipatool
-    # Example output of downloadResponse:
-    # {"level":"info","output":"/Users/mgates/ipastuff/ipa-files/encrypted/com.wms.ecgcases_798663024_5.4.1.ipa","success":true,"time":"2023-06-17T11:20:59-05:00"}
-    # downloadedIPA=$(echo "$downloadResponse" | jq 'fromjson | .output')
-    # echo "✅ Downloaded app to $downloadedIPA"
+  # JQ is not working with ipatool
+  # Example output of downloadResponse:
+  # {"level":"info","output":"/Users/mgates/ipastuff/ipa-files/encrypted/com.wms.ecgcases_798663024_5.4.1.ipa","success":true,"time":"2023-06-17T11:20:59-05:00"}
+  # downloadedIPA=$(echo "$downloadResponse" | jq 'fromjson | .output')
+  # echo "✅ Downloaded app to $downloadedIPA"
 
-    # Verify that the file was downloaded
-    downloadedIPA=$(check_files "ipa-files/encrypted" "$bundleId")
-    if [[ $? -eq 0 ]]; then
-      echo "❌ File not found in the downloads directory."
-      exit 1
-    fi
+  # Verify that the file was downloaded
+  downloadedIPA=$(check_files "ipa-files/encrypted" "$bundleId")
+  if [[ $? -eq 0 ]]; then
+    echo "❌ File not found in the downloads directory."
+    exit 1
+  fi
 
   # Install App
   if ! install_app "$bundleId" "$downloadedIPA"; then
