@@ -64,7 +64,7 @@ transfer_file() {
   filename=$(basename "$file_path")
 
   # Append the filename, chatId, topicId, and expiration date to the appInfoResponse JSON object
-  updatedJson=$(echo "$appInfoResponse" | jq --arg filename "$filename" --arg chatId "$chatId" --arg topicId "$topicId" '. + {filename: $filename, chatId: $chatId, topicId: $topicId, expireAt: (now | strflocaltime("%Y-%m-%dT%H:%M:%SZ") | fromdate + 172800 | strftime("%Y-%m-%dT%H:%M:%SZ")) }')
+  updatedJson=$(echo "$appInfoResponse" | jq --arg filename "$filename" --arg chatId "$chatId" --arg topicId "$topicId" '. + {filename: $filename, chatId: $chatId, topicId: $topicId, expireAt: (now | strflocaltime("%Y-%m-%dT%H:%M:%SZ") | fromdate + 2592000 | strftime("%Y-%m-%dT%H:%M:%SZ")) }')
 
   # Insert the updated JSON into the MongoDB collection
   mongosh "$MONGODB_URL" --quiet --eval "db.app_info_collection.insertOne($updatedJson)"
@@ -270,7 +270,7 @@ main() {
     echo "❌ No decrypted files found for app."
     exit 1
   fi
-  
+
   transfer_file "$decryptedIPA" "$chatId" "$topicId" "$appInfoResponse"
   echo "⬆️ Starting IPA upload..."
 
