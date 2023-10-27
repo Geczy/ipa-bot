@@ -1,0 +1,11 @@
+{
+  "apps": [
+    {
+      "name": "ipabot",
+      "script": "yarn",
+      "args": "start",
+      "watch": ["src"],
+      "interpreter": "bash"
+    }
+  ]
+}

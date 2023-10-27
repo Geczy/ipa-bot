@@ -9,7 +9,6 @@
     "build": "yarn tsc",
     "start": "node -r dotenv/config ./build/bot.js",
     "up": "bash ./src/bash-decryptor/download-ipa.sh",
-    "bot": "yarn start",
     "format": "yarn prettier --write .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "husky install"

@@ -1,12 +1,11 @@
 .env
 *.ipa
 output.json
-!bin
-iosqueuebot_session/
+iosqueuebot_session
 *.log
 *.js
 build
 coverage
 crash
-node_modules/
-ipa-files/
+node_modules
+ipa-files
