@@ -25,6 +25,7 @@ install_app() {
 
     # ideviceinstaller has this string in the output
     if [[ "$installResponse" != *"Install: Complete"* ]]; then
+      echo "$installResponse"
       return 1
     fi
 
