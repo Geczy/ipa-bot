@@ -3,12 +3,13 @@ import { NewMessage, NewMessageEvent } from "telegram/events";
 import { CHAT_IDS, TOPIC_IDS, client } from "./client";
 import MongoDB from "./lib/mongo";
 import { MongoApp } from "./lib/types";
-import { removeFile, unlinkFilesWithWildcard } from "./removeFile";
+import { deleteSingleFile, deleteFilesMatchingPattern } from "./lib/utils";
 import { startDecryption } from "./startDecryption";
 import { uploadDecryptedFile } from "./uploadDecryptedFile";
+import { Api } from "telegram";
 
 let isBusy = false;
-const requestQueue: { trackId: string; event: NewMessageEvent }[] = [];
+const requestQueue: { trackId: string; message: Api.Message }[] = [];
 const admins = process.env.ADMIN_IDS?.split(",") || [];
 
 async function finished(mongoDB?: MongoDB) {
@@ -26,40 +27,31 @@ async function finished(mongoDB?: MongoDB) {
   if (requestQueue.length > 0) {
     const nextRequest = requestQueue.shift();
     if (nextRequest) {
-      await handleRequest(nextRequest.event);
+      await handleRequest(nextRequest.message);
     }
   }
 }
 
-async function handleReboot(event: NewMessageEvent) {
-  if (!event.chatId || !admins.includes(`${event.message.senderId}`)) return;
-
-  // Example: Close the MongoDB connection
+async function handleReboot(message: Api.Message) {
   const mongoDB = MongoDB.getInstance();
   await mongoDB.close();
 
-  await unlinkFilesWithWildcard(`${dirname(__dirname)}/ipa-files/decrypted/*`);
-  await unlinkFilesWithWildcard(`${dirname(__dirname)}/ipa-files/encrypted/*`);
+  await deleteFilesMatchingPattern(
+    `${dirname(__dirname)}/ipa-files/decrypted/*`,
+  );
+  await deleteFilesMatchingPattern(
+    `${dirname(__dirname)}/ipa-files/encrypted/*`,
+  );
 
-  await client.sendMessage(event.chatId, {
+  const sendTo = message.chatId?.toString() as string;
+  await client.sendMessage(sendTo, {
     message: "Done",
-    replyTo: event.message,
+    replyTo: message,
   });
 }
 
-async function handleDelete(event: NewMessageEvent) {
-  if (!event.chatId || !admins.includes(`${event.message.senderId}`)) return;
-
-  const message = event.message;
+export async function handleDelete(message: Api.Message) {
   const sendTo = message.chatId?.toString() as string;
-
-  const topicId = message.replyToMsgId;
-  const index = CHAT_IDS.indexOf(sendTo);
-  if (parseInt(TOPIC_IDS[index], 10) && TOPIC_IDS[index] !== `${topicId}`) {
-    console.error("Unauthorized topicId");
-    return 1;
-  }
-
   const urlParts = message.text.trim().split(" ");
   if (urlParts.length < 2 || !message.text.includes("apps.apple.com")) {
     await client.sendMessage(sendTo, {
@@ -104,19 +96,13 @@ async function handleDelete(event: NewMessageEvent) {
   }
 }
 
-async function handleRequest(event: NewMessageEvent) {
-  const message = event.message;
+async function handleRequest(message: Api.Message) {
   const sendTo = message.chatId?.toString() as string;
-
-  const topicId = message.replyToMsgId;
-  const index = CHAT_IDS.indexOf(sendTo);
-  if (parseInt(TOPIC_IDS[index], 10) && TOPIC_IDS[index] !== `${topicId}`) {
-    console.error("Unauthorized topicId");
-    return 1;
-  }
-
   const urlParts = message.text.trim().split(" ");
-  if (urlParts.length < 2 || !/apps\.apple\.com|itunes\.apple\.com/.test(message.text)) {
+  if (
+    urlParts.length < 2 ||
+    !/apps\.apple\.com|itunes\.apple\.com/.test(message.text)
+  ) {
     await client.sendMessage(sendTo, {
       message: "❌ Invalid App Store URL.",
       replyTo: message,
@@ -168,7 +154,7 @@ async function handleRequest(event: NewMessageEvent) {
       replyTo: message,
     });
 
-    requestQueue.push({ trackId, event });
+    requestQueue.push({ trackId, message });
     return;
   }
 
@@ -188,21 +174,21 @@ async function handleRequest(event: NewMessageEvent) {
   }
 
   // Lookup the last document by trackId
-  let appInfo = (await collection.findOne(
+  let appInfo = await collection.findOne<MongoApp>(
     { trackId },
-    { sort: { _id: -1 } }
-  )) as unknown as MongoApp;
+    { sort: { _id: -1 } },
+  );
 
   try {
     if (!appInfo) {
-      console.log("No app found for trackId:", trackId);
+      console.log("Downloading app for trackId:", trackId);
       await startDecryption({ message, trackId, countryCode, sendTo });
 
       // Lookup the app we just decrypted by trackId
-      appInfo = (await collection.findOne(
+      appInfo = await collection.findOne<MongoApp>(
         { trackId },
-        { sort: { _id: -1 } }
-      )) as unknown as MongoApp;
+        { sort: { _id: -1 } },
+      );
 
       // TODO: Safe to ignore?
       if (!appInfo) {
@@ -213,10 +199,10 @@ async function handleRequest(event: NewMessageEvent) {
         return 1;
       }
 
-      await uploadDecryptedFile(appInfo, message.id);
+      await uploadDecryptedFile(appInfo, message);
     } else if (!parseInt(`${appInfo.fileId || "0"}`, 10)) {
       console.log("No file found for trackId:", trackId);
-      await uploadDecryptedFile(appInfo, message.id);
+      await uploadDecryptedFile(appInfo, message);
     } else {
       console.log("File found for trackId:", trackId);
       const msgs = await client.getMessages(appInfo.chatId, {
@@ -240,14 +226,14 @@ async function handleRequest(event: NewMessageEvent) {
       const decrypted = `${dirname(__dirname)}/ipa-files/decrypted/${
         appInfo.filename
       }`;
-      await removeFile(decrypted);
+      await deleteSingleFile(decrypted);
 
       // Could not be downloaded
       // This one is the bundle id with a wildcard, since we don't know the exact filename
       const encrypted = `${dirname(__dirname)}/ipa-files/encrypted/${
         appInfo.bundleId
       }*`;
-      await unlinkFilesWithWildcard(encrypted);
+      await deleteFilesMatchingPattern(encrypted);
     }
 
     await finished(mongoDB);
@@ -261,7 +247,18 @@ client.addEventHandler(async (event) => {
   if (event.isPrivate && !admins.includes(`${event.message.senderId}`)) return;
   if (!event.isPrivate && !CHAT_IDS.includes(sendTo)) return 1;
 
-  if (message.text.startsWith("/request")) handleRequest(event);
-  if (message.text.startsWith("/reboot")) handleReboot(event);
-  if (message.text.startsWith("/delete")) handleDelete(event);
+  // Lock down to certain topicId's
+  const topicId = message.replyToMsgId;
+  const index = CHAT_IDS.indexOf(sendTo);
+  if (parseInt(TOPIC_IDS[index], 10) && TOPIC_IDS[index] !== `${topicId}`) {
+    console.error("Unauthorized topicId");
+    return 1;
+  }
+
+  if (message.text.startsWith("/request")) handleRequest(message);
+
+  // Admin commands
+  if (!event.chatId || !admins.includes(`${message.senderId}`)) return;
+  if (message.text.startsWith("/reboot")) handleReboot(message);
+  if (message.text.startsWith("/delete")) handleDelete(message);
 }, new NewMessage());

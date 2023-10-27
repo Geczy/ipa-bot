@@ -5,7 +5,8 @@
       "script": "yarn",
       "args": "start",
       "watch": ["src"],
-      "interpreter": "bash"
+      "interpreter": "bash",
+      "watch_delay": 5000
     }
   ]
 }

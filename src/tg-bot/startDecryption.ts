@@ -2,7 +2,23 @@ import { spawn } from "child_process";
 import { Api } from "telegram";
 import { client } from "./client";
 import { emojis } from "./lib/globals";
-import { stringContainsArray } from "./stringContainsArray";
+import { containsAnySubstrings } from "./lib/utils";
+
+async function editMessage(sendTo: string, messageId: number, text: string) {
+  await client.editMessage(sendTo, {
+    message: messageId,
+    parseMode: "md",
+    text,
+  });
+}
+
+async function deleteMessage(sendTo: string, messageId: number) {
+  try {
+    await client.deleteMessages(sendTo, [messageId], {});
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 export async function startDecryption({
   message,
@@ -15,53 +31,39 @@ export async function startDecryption({
   countryCode: string;
   sendTo: string;
 }) {
-  let output = "";
+  let processOutput = "";
 
-  return new Promise(async (resolve, reject) => {
-    // Initial message just to get an id
-    const sending = await client.sendMessage(sendTo, {
-      message: `♻️ Initializing bot...`,
-      replyTo: message,
-    });
+  const initialMessage = await client.sendMessage(sendTo, {
+    message: `♻️ Initializing bot...`,
+    replyTo: message,
+  });
 
-    const yarnProcess = spawn("yarn", [
-      "up",
-      trackId,
-      countryCode,
-      sendTo,
-      `${message.replyToMsgId || ""}`,
-    ]);
+  const yarnProcess = spawn("yarn", [
+    "up",
+    trackId,
+    countryCode,
+    sendTo,
+    `${message.replyToMsgId || ""}`,
+  ]);
 
-    yarnProcess.stdout.on("data", async (data: Buffer) => {
-      console.log(data.toString());
+  yarnProcess.stdout.on("data", async (data: Buffer) => {
+    const msgText = data.toString();
+    const firstLine = msgText.split("\n")[0].trim();
 
-      // save just the first line of msg in case yarn piggy backs
-      const msg = data.toString().split("\n")[0].trim();
-      if (!msg.length) return;
-      if (!stringContainsArray(data.toString(), emojis)) return;
+    if (firstLine && containsAnySubstrings(msgText, emojis)) {
+      processOutput += `${firstLine}\n`;
+      await editMessage(sendTo, initialMessage.id, processOutput);
+    }
+  });
 
-      output += `${msg}\n`;
-      await client.editMessage(sendTo, {
-        message: sending.id,
-        parseMode: "md",
-        text: output,
-      });
-    });
-
+  return new Promise<string>((resolve, reject) => {
     yarnProcess.on("close", async () => {
-      if (output.includes("Starting IPA upload")) {
-        try {
-          await client.deleteMessages(sendTo, [sending.id], {});
-        } catch (e) {
-          console.log(e);
-        }
-
-        resolve(output);
-        return;
+      if (processOutput.includes("Starting IPA upload")) {
+        await deleteMessage(sendTo, initialMessage.id);
+        resolve(processOutput);
+      } else {
+        reject(new Error("Decryption process closed"));
       }
-
-      // Reject the Promise if the process is closed without finding the desired string
-      reject("Decryption process closed");
     });
   });
 }

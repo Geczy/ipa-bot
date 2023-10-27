@@ -8,7 +8,7 @@ export interface MongoApp {
   bundleId: string;
   artworkUrl512: string;
   releaseNotes: string;
-  currentVersionReleaseDate: Date;
+  currentVersionReleaseDate: string;
   version: string;
   trackName: string;
   trackViewUrl: string;
