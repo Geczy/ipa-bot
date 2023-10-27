@@ -47,13 +47,13 @@ fi
 
 # Set paths
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  ipatool="src/bash-decryptor/bin/ipatool-2.1.3-macos-arm64"
+  ipatool="bin/ipatool-2.1.3-macos-arm64"
 else
   arch=$(uname -m)
   if [[ "$arch" == "x86_64" ]]; then
-    ipatool="src/bash-decryptor/bin/ipatool-2.1.3-linux-amd64"
+    ipatool="bin/ipatool-2.1.3-linux-amd64"
   elif [[ "$arch" == "aarch64" ]]; then
-    ipatool="src/bash-decryptor/bin/ipatool-2.1.3-linux-arm64"
+    ipatool="bin/ipatool-2.1.3-linux-arm64"
   else
     echo "Your architecture ($arch) is not supported."
     exit 1
