@@ -2,11 +2,11 @@
   "apps": [
     {
       "name": "ipabot",
-      "script": "bun",
-      "args": "run start",
+      "script": "yarn",
+      "args": "start",
       "watch": ["src"],
-      "exec_interpreter": "none",
-      "exec_mode": "fork"
+      "interpreter": "bash",
+      "watch_delay": 5000
     }
   ]
 }

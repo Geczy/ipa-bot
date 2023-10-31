@@ -1,5 +1,8 @@
+import dotenv from "dotenv";
 import { TelegramClient } from "telegram";
 import { StoreSession } from "telegram/sessions";
+
+dotenv.config();
 
 const envVars = [
   "TELEGRAM_API_ID",

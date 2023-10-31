@@ -86,18 +86,12 @@ export async function handleDelete(message: Api.Message) {
 }
 
 function parseAppStoreUrl(url: string) {
-  url = url.trim();
-
-  if (url.startsWith("/request")) {
-    const urlParts = url.trim().split(" ");
-    if (urlParts.length < 2) {
-      return { isValid: false };
-    }
-
-    url = urlParts[1].trim();
-  } else if (!/apps\.apple\.com|itunes\.apple\.com/.test(url)) {
+  const urlParts = url.trim().split(" ");
+  if (urlParts.length < 2 || !/apps\.apple\.com|itunes\.apple\.com/.test(url)) {
     return { isValid: false };
   }
+
+  url = urlParts[1].trim();
 
   const idRegex = /\/id(\d+)/;
   const countryRegex = /apple\.com\/(\w\w)\//;
@@ -294,12 +288,7 @@ function isAuthorizedGroupTopic(event: NewMessageEvent) {
 }
 
 async function handleRegularCommands(message: Api.Message) {
-  if (
-    message.text.startsWith("/request") ||
-    /apps\.apple\.com|itunes\.apple\.com/.test(message.text)
-  ) {
-    handleAppRequest(message);
-  }
+  if (message.text.startsWith("/request")) handleAppRequest(message);
 }
 
 async function handleAdminCommands(event: NewMessageEvent) {

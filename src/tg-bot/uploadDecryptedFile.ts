@@ -8,7 +8,7 @@ import { Button } from "telegram/tl/custom/button";
 import { client } from "./client";
 import MongoDB from "./lib/mongo";
 import { MongoApp } from "./lib/types";
-import { handleDelete } from ".";
+import { handleDelete } from "./bot";
 
 async function fetchArtwork(url: string): Promise<Buffer> {
   const response = await axios.get(url, { responseType: "arraybuffer" });

@@ -5,11 +5,11 @@
   "description": "",
   "main": "build/index.js",
   "scripts": {
-    "prestart": "bun run build",
-    "build": "bun build ./src/tg-bot/index.ts --target=bun --outdir=./build",
-    "start": "bun ./build/index.js",
+    "prestart": "yarn build",
+    "build": "yarn tsc",
+    "start": "node -r dotenv/config ./build/bot.js",
     "up": "bash ./src/bash-decryptor/download-ipa.sh",
-    "format": "bun prettier --write .",
+    "format": "yarn prettier --write .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "husky install"
   },
@@ -21,10 +21,10 @@
   "dependencies": {
     "axios": "^1.5.1",
     "bagbak": "^3.0.27",
+    "dotenv": "^16.3.1",
     "glob": "^10.3.10",
-    "lru-cache": "^10.0.1",
     "mongo": "^0.1.0",
-    "sharp": "0.33.0-alpha.9",
+    "sharp": "^0.32.6",
     "telegram": "^2.19.8"
   },
   "engines": {
@@ -34,7 +34,7 @@
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/node": "^20.8.8",
-    "bun-types": "^1.0.7",
+    "dotenv-cli": "^7.3.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.0.2",
     "prettier": "3.0.3",
