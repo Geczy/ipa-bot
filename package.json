@@ -8,6 +8,7 @@
     "prestart": "bun run build",
     "build": "bun build ./src/tg-bot/index.ts --target=bun --outdir=./build",
     "start": "bun ./build/index.js",
+    "dev": "bun --watch ./src/tg-bot/index.ts",
     "up": "bash ./src/bash-decryptor/download-ipa.sh",
     "format": "bun prettier --write .",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -27,6 +28,9 @@
     "sharp": "0.33.0-alpha.9",
     "telegram": "^2.19.8"
   },
+  "trustedDependencies": [
+    "frida"
+  ],
   "engines": {
     "npm": ">=9.0.0",
     "node": ">=19.0.0"

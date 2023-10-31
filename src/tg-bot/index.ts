@@ -29,6 +29,7 @@ async function handleReboot(message: Api.Message) {
   const mongoDB = MongoDB.getInstance();
   await mongoDB.close();
 
+  console.log(`${dirname(__dirname)}/ipa-files/decrypted/*`);
   await deleteFilesMatchingPattern(
     `${dirname(__dirname)}/ipa-files/decrypted/*`,
   );
@@ -71,12 +72,13 @@ export async function handleDelete(message: Api.Message) {
 
     // Lookup the last document by trackId and delete it
     let appInfo = await collection.findOneAndDelete({ trackId });
-    if (appInfo.ok) {
+    if (appInfo?.ok) {
       await client.sendMessage(sendToChatId, {
         message: `✅ Deleted app with trackId: ${trackId}`,
         replyTo: message,
       });
     } else {
+      console.error(appInfo);
       await client.sendMessage(sendToChatId, {
         message: `❌ Failed to delete app with trackId: ${trackId}`,
         replyTo: message,
@@ -250,6 +252,9 @@ async function handleAppRequest(message: Api.Message) {
 
   if (appInfo) {
     // Just double make sure files got cleaned up, in the event there's errors
+    console.log(
+      `${dirname(__dirname)}/ipa-files/decrypted/${appInfo.filename}`,
+    );
     const decrypted = `${dirname(__dirname)}/ipa-files/decrypted/${
       appInfo.filename
     }`;

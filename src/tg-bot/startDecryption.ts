@@ -1,4 +1,3 @@
-import { spawn } from "child_process";
 import { Api } from "telegram";
 import { client } from "./client";
 import { emojis } from "./lib/globals";
@@ -38,32 +37,39 @@ export async function startDecryption({
     replyTo: message,
   });
 
-  const yarnProcess = spawn("yarn", [
-    "up",
-    trackId,
-    countryCode,
-    sendTo,
-    `${message.replyToMsgId || ""}`,
-  ]);
+  console.log(Bun.version);
 
-  yarnProcess.stdout.on("data", async (data: Buffer) => {
-    const msgText = data.toString();
+  // log the command we are spawnning
+  console.log(`yarn up ${trackId} ${countryCode} ${sendTo}`);
+
+  const proc = Bun.spawn(
+    [
+      "yarn",
+      "up",
+      trackId,
+      countryCode,
+      sendTo,
+      `${message.replyToMsgId || ""}`,
+    ],
+    {
+      onExit(proc, exitCode, signalCode, error) {
+        if (processOutput.includes("Starting IPA upload")) {
+          deleteMessage(sendTo, initialMessage.id);
+        } else {
+          console.error(processOutput);
+        }
+      },
+    },
+  );
+
+  // Use async iterator to read from stdout
+  for await (const chunk of proc.stdout) {
+    const msgText = new TextDecoder().decode(chunk);
     const firstLine = msgText.split("\n")[0].trim();
 
     if (firstLine && containsAnySubstrings(msgText, emojis)) {
       processOutput += `${firstLine}\n`;
       await editMessage(sendTo, initialMessage.id, processOutput);
     }
-  });
-
-  return new Promise<string>((resolve, reject) => {
-    yarnProcess.on("close", async () => {
-      if (processOutput.includes("Starting IPA upload")) {
-        await deleteMessage(sendTo, initialMessage.id);
-        resolve(processOutput);
-      } else {
-        reject(new Error("Decryption process closed"));
-      }
-    });
-  });
+  }
 }

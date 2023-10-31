@@ -42,13 +42,16 @@ decrypt_app() {
   local absolute_path=$2
   local decrypt_output
 
-  decrypt_output=$(yarn bagbak "$bundleId" -o "ipa-files/decrypted/")
+  decrypt_output=$(./node_modules/.bin/bagbak "$bundleId" -o "ipa-files/decrypted/")
+
+  echo "$decrypt_output"
+  # echo the command
+  echo "./node_modules/.bin/bagbak $bundleId -o ipa-files/decrypted/"
 
   if [[ "$decrypt_output" == *"Saved to"* ]]; then
     return 0
   fi
 
-  echo "$decrypt_output"
   return 1
 }
 
